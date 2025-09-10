@@ -32,7 +32,7 @@ class Player():
 
         self.glory = 0
         self.gold = 0
-        self.prisonnier = 0
+        self._prisonnier = 0
         self.army = 0
         self.cheap = 0
 
@@ -47,6 +47,16 @@ class Player():
             "champ": 0
         }
     
+    @property
+    def prisonnier(self):
+        return self._prisonnier
+    
+    @prisonnier.setter()
+    def prisonnier(self, value):
+        self._prisonnier = value
+        if self._prisonnier > self.cheap:
+            self._prisonnier = self.cheap
+
     def play_turn(self):
         if random.randint(1, 3) == 1:
             self.raid()
@@ -99,6 +109,7 @@ class Player():
             self.army += raid.get("army", 0)
             chainable = raid.get("chainable", False)
             if chainable and random.randint(1, self.datas.chainable_chances) == 1:
+                self.gold += raid.get("gold_bonus", 0)
                 break
     
     def get_victory(self):
@@ -120,25 +131,25 @@ class Datas():
         self.raids = []
         self.victory_cards = []
         self.lose_cards = [
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {}
+            {"nv": 1, "prisonnier": 1},
+            {"nv": 1, "glory": 1},
+            {"nv": 1, "gold": 3},
+            {"nv": 2, "army": -1, "prisonnier": 2},
+            {"nv": 2, "prisonnier": -1, "gold": 4},
+            {"nv": 2, "army": -1, "gold": 5},
+            {"nv": 2, "glory": -1, "prisonnier": 2, "gold": 2},
+            {"nv": 2, "army": -1, "gold": 4, "chainable": True},
+            {"nv": 2, "gold": (1, "prisonnier")},
+            {"nv": 3, "army": -1, "prisonnier": 1, "chainable": True},
+            {"nv": 3, "prisonnier": -1, "gold": 2, "chainable": True, "gold_bonus": 1},
+            {"nv": 3, "gold": -2, "army": 1, "chainable": True},
+            {"nv": 3, "prisonnier": 2},
+            {"nv": 3, "gold": -4, "prisonnier": 1, "chainable": True},
+            {"nv": 3, "gold": -1, "glory": 2},
+            {"nv": 3, "army": -2, "glory": 2, "gold": 1},
+            {"nv": 4, "gold": -2, "glory": -2, "chainable": True},
+            {"nv": 4, "gold": (2, "army")},
+            {"nv": 4, "army": (0.25, "army")}
         ]
 
 datas = Datas(2)
