@@ -51,13 +51,14 @@ class Player():
     def prisonnier(self):
         return self._prisonnier
     
-    @prisonnier.setter()
+    @prisonnier.setter
     def prisonnier(self, value):
         self._prisonnier = value
         if self._prisonnier > self.cheap:
             self._prisonnier = self.cheap
 
     def play_turn(self):
+        self.cheap += 1
         if random.randint(1, 3) == 1:
             self.raid()
         elif random.randint(1, 2) == 1:
@@ -75,16 +76,21 @@ class Player():
         self.apply_effects(random.choice(self.possibles_raids))
     
     def attaque(self):
-        defenseur = random.choice(self.game.players.remove(self.name))
-        self.army -= random.randint(1,6)
-        defenseur.army -= random.randint(1,6)
+        oppenents = [player for player in self.game.players if player != self]
+        print(oppenents)
+        if not oppenents:
+            print("error: no oppenent")
+            return
+        defenseur = random.choice(oppenents)
+        self.army -= random.randint(1, 6)
+        defenseur.army -= random.randint(1, 6)
         if self.army > defenseur.army:
-            if random.randint(1,2) == 1:
+            if random.randint(1, 2) == 1:
                 self.get_victory()
             else:
                 defenseur.get_lose()
         elif self.army < defenseur.army:
-            if random.randint(1.2) == 1:
+            if random.randint(1, 2) == 1:
                 self.get_lose()
             else:
                 defenseur.get_victory()
@@ -102,6 +108,8 @@ class Player():
     
     def apply_effects(self, raid):
         chainable = True
+        if isinstance(raid.get("gold", 0), tuple) or isinstance(raid.get("glory", 0), tuple) or isinstance(raid.get("prisonnier", 0), tuple) or isinstance(raid.get("army", 0), tuple):
+            return
         while chainable:
             self.glory += raid.get("glory", 0)
             self.gold += raid.get("gold", 0)
@@ -128,9 +136,9 @@ class Datas():
     def __init__(self, chainable_chances=2):
         self.chainable_chances = chainable_chances
         self.technologies = []
-        self.raids = []
+        self.lose_cards = []
         self.victory_cards = []
-        self.lose_cards = [
+        self.raids = [
             {"nv": 1, "prisonnier": 1},
             {"nv": 1, "glory": 1},
             {"nv": 1, "gold": 3},
