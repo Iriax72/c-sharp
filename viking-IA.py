@@ -24,7 +24,7 @@ class Game():
 
     def reset(self):
         self.analyse.turn_per_game.append(0)
-        self.playerA = Plaqyer("playerA", self.datas, self)
+        self.playerA = Player("playerA", self.datas, self)
         self.playerB = Player("playerB", self.datas, self)
         self.playerC = Player("playerC", self.datas, self)
 
@@ -60,14 +60,17 @@ class Player():
         self._prisonnier = value
         if self._prisonnier > self.cheap:
             self._prisonnier = self.cheap
+    
+    @property
+    def improvables_buildings(self):
+        return [building for building in self.buildings_level.keys() if self.buildings_level[building] < 4]
 
     def play_turn(self):
         self.cheap += 1
-        if random.randint(1, 3) == 1:
-            self.raid()
+        if random.randint(1, 3) == 1 and self.improvables_buildings:
+            self.build(random.choice(self.improvables_buildings))
         elif random.randint(1, 2) == 1:
-            #build
-            pass
+            self.raid()
         else:
             self.attaque()
         self.verify_gods()
@@ -78,13 +81,12 @@ class Player():
     def raid(self):
         self.possibles_raids = [raid for raid in self.datas.raids if self.test(raid)]
         self.apply_effects(random.choice(self.possibles_raids))
-    
+
+    def build(self, building_key):
+        self.buildings_level[building_key] += 1
+
     def attaque(self):
         oppenents = [player for player in self.game.players if player != self]
-        print(oppenents)
-        if not oppenents:
-            print("error: no oppenent")
-            return
         defenseur = random.choice(oppenents)
         self.army -= random.randint(1, 6)
         defenseur.army -= random.randint(1, 6)
