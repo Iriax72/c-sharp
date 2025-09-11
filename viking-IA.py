@@ -1,8 +1,9 @@
 import random
 
 class Game():
-    def __init__(self, datas):
+    def __init__(self, datas, analyse):
         self.datas = datas
+        self.analyse = analyse
         self.playerA = None
         self.playerB = None
         self.playerC = None
@@ -14,13 +15,16 @@ class Game():
     def play(self, count):
         for game in range(count):
             self.reset()
-            while (self.playerA.glory <50) and (self.playerB.glory <50) and (self.playerC.glory <50):
+            while (self.playerA.glory <50) or (self.playerB.glory <50) or (self.playerC.glory <50):
+                self.analyse.turn_per_game[-1] += 1
+                print("tour numero: ", self.analyse.turn_per_game[-1])
                 self.playerA.play_turn()
                 self.playerB.play_turn()
                 self.playerC.play_turn()
 
     def reset(self):
-        self.playerA = Player("playerA", self.datas, self)
+        self.analyse.turn_per_game.append(0)
+        self.playerA = Plaqyer("playerA", self.datas, self)
         self.playerB = Player("playerB", self.datas, self)
         self.playerC = Player("playerC", self.datas, self)
 
@@ -96,19 +100,19 @@ class Player():
                 defenseur.get_victory()
             
     def test(self, raid):
-        if self.glory + raid.get("glory", 0) < 0:
+        if not isinstance(raid.get("glory", 0), tuple) and self.glory + raid.get("glory", 0) < 0:
             return False
-        if self.gold + raid.get("gold", 0) < 0:
+        if not isinstance(raid.get("gold", 0), tuple) and self.gold + raid.get("gold", 0) < 0:
             return False
-        if self.prisonnier + raid.get("prisonnier", 0) < 0:
+        if not isinstance(raid.get("prisonnier", 0), tuple) and self.prisonnier + raid.get("prisonnier", 0) < 0:
             return False
-        if self.army + raid.get("army", 0) < 0:
+        if not isinstance(raid.get("army", 0), tuple) and self.army + raid.get("army", 0) < 0:
             return False
         return True
     
     def apply_effects(self, raid):
         chainable = True
-        if isinstance(raid.get("gold", 0), tuple) or isinstance(raid.get("glory", 0), tuple) or isinstance(raid.get("prisonnier", 0), tuple) or isinstance(raid.get("army", 0), tuple):
+        if isinstance(raid.get("gold", 0), tuple) or isinstance(raid.get("glory", 0), tuple) or isinstance(raid.get("prisonnier", 0), tuple) or isinstance(raid.get("army", 0), tuple) or isinstance(raid.get("gold_bonus", 0), tuple):
             return
         while chainable:
             self.glory += raid.get("glory", 0)
@@ -130,7 +134,8 @@ class Player():
         self.hand += random.choice(self.datas.technologies)
 
 class Analyse():
-    pass
+    def __init__(self):
+        self.turn_per_game = []
 
 class Datas():
     def __init__(self, chainable_chances=2):
@@ -161,8 +166,9 @@ class Datas():
         ]
 
 datas = Datas(2)
-game = Game(datas)
-game.play(100)
+analyse = Analyse()
+game = Game(datas, analyse)
+game.play(1)
 
 # À ajouter:
 # - effets de raids tuples
