@@ -40,15 +40,17 @@ class Player():
         self.army = 0
         self.cheap = 0
 
+        self.dieux = []
+
         self.technologies = []
         self.possibles_raids = []
 
         self.buildings_level = {
             "mairie": 1,
-            "port": 0,
+            "port": 1,
             "forge": 0,
             "temple": 0,
-            "champ": 0
+            "champs": 0
         }
     
     @property
@@ -63,7 +65,11 @@ class Player():
     
     @property
     def improvables_buildings(self):
-        return [building for building in self.buildings_level.keys() if self.buildings_level[building] < 4]
+        improvables = []
+        for building in self.buildings_level.keys():
+            if self.building_level[building] < 4 and self.test_building(building):
+                improvables.append(building)
+        return improvables
 
     def play_turn(self):
         self.cheap += 1
@@ -79,7 +85,7 @@ class Player():
         pass
 
     def raid(self):
-        self.possibles_raids = [raid for raid in self.datas.raids if self.test(raid)]
+        self.possibles_raids = [raid for raid in self.datas.raids if self.test_raid(raid)]
         self.apply_effects(random.choice(self.possibles_raids))
 
     def build(self, building_key):
@@ -101,21 +107,33 @@ class Player():
             else:
                 defenseur.get_victory()
             
-    def test(self, raid):
-        if not isinstance(raid.get("glory", 0), tuple) and self.glory + raid.get("glory", 0) < 0:
+    def test_raid(self, raid):
+        if not isinstance(raid.get("glory", 0), tuple) and self.glory >= raid.get("glory", 0):
             return False
-        if not isinstance(raid.get("gold", 0), tuple) and self.gold + raid.get("gold", 0) < 0:
+        if not isinstance(raid.get("gold", 0), tuple) and self.gold >= raid.get("gold", 0):
             return False
-        if not isinstance(raid.get("prisonnier", 0), tuple) and self.prisonnier + raid.get("prisonnier", 0) < 0:
+        if not isinstance(raid.get("prisonnier", 0), tuple) and self.prisonnier >= raid.get("prisonnier", 0):
             return False
-        if not isinstance(raid.get("army", 0), tuple) and self.army + raid.get("army", 0) < 0:
+        if not isinstance(raid.get("army", 0), tuple) and self.army >= raid.get("army", 0):
             return False
         return True
     
+    def test_building(self, building):
+        building_cost = self.datas.buildings_cost[building][self.buildings_level[building]]
+        if self.gold < building_cost.get("gold", 0):
+            return False
+        if self.prisonnier < building_cost.get("prisonnier", 0):
+            return False
+        if self.cheap < building_cost.get("cheap", 0):
+            return False
+        if building_cost.get("dieu", 0) != 0 and building_cost.get("dieu", 0) not in self.dieux:
+            return False
+        return True
+
     def apply_effects(self, raid):
         chainable = True
         if isinstance(raid.get("gold", 0), tuple) or isinstance(raid.get("glory", 0), tuple) or isinstance(raid.get("prisonnier", 0), tuple) or isinstance(raid.get("army", 0), tuple) or isinstance(raid.get("gold_bonus", 0), tuple):
-            return
+            return #faut gérer ca !!!
         while chainable:
             self.glory += raid.get("glory", 0)
             self.gold += raid.get("gold", 0)
@@ -166,6 +184,39 @@ class Datas():
             {"nv": 4, "gold": (2, "army")},
             {"nv": 4, "army": (0.25, "army")}
         ]
+
+        buildings_cost = {
+            "mairie": [
+                {}, 
+                {"gold": 5, "prisonnier": 4}, 
+                {"gold": 6, "prisonnier": 4}, 
+                {"gold": 13, "prisonnier": 5, "dieu": "Odin"}
+            ],
+            "port": [
+                {}, 
+                {"gold": 4, "prisonnier": 3},
+                {"gold": 6, "prisonnier": 4}, 
+                {"gold": 9, "prisonnier": 6, "dieu": "Njord"}
+            ],
+            "forge": [
+                {"gold": 4}, 
+                {"gold": 5, "prisonnier": 2}, 
+                {"gold": 7, "prisonnier": 2}, 
+                {"gold": 10, "prisonnier": 3, "dieu": "Thor"}
+            ],
+            "temple": [
+                {"gold": 3}, 
+                {"gold": 3, "cheap": 1}, 
+                {"gold": 3, "prisonnier": 4}, 
+                {"gold": 5, "prisonnier": 5, "dieu": "Loki"}
+            ],
+            "champs": [
+                {"gold": 5, "prisonnier": 1}, 
+                {"gold": 4}, 
+                {"gold": 3, "prisonnier": 2}, 
+                {"gold": 5, "prisonnier": 3, "dieu": "Freyr"}
+            ]
+        }
 
 datas = Datas(2)
 analyse = Analyse()
