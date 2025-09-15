@@ -60,6 +60,10 @@ class Player():
         }
 
         self.win = False
+
+    @property
+    def ressources(self):
+        return f"glory: {self.glory}, gold: {self.gold}, cheap: {self.cheap}, prisonniers: {self.prisonnier}, army: {self.army}"
     
     @property
     def prisonnier(self):
@@ -104,7 +108,6 @@ class Player():
         pass
 
     def raid(self):
-        print(self.possibles_raids)
         self.apply_raid_effects(random.choice(self.possibles_raids))
 
     def build(self, building):
@@ -138,33 +141,24 @@ class Player():
     def test_raid(self, raid):
         if isinstance(raid.get("glory", 0), tuple):
             if self.glory + self.tuple_effect(raid.get("glory", 0)) < 0:
-                print(raid, "refusé (glory)", self.glory)
                 return False
         elif self.glory + raid.get("glory", 0) < 0:
-            print(raid, "refusé (glory)", self.glory)
             return False
         if isinstance(raid.get("gold", 0), tuple):
             if self.gold + self.tuple_effect(raid.get("gold", 0)) < 0:
-                print(raid, "refusé (gold)", self.gold)
                 return False
         elif self.gold + raid.get("gold", 0) < 0:
-            print(raid, "refusé (gold)", self.gold)
             return False
         if isinstance(raid.get("prisonnier", 0), tuple):
             if self.prisonnier + self.tuple_effect(raid.get("prisonnier", 0)) < 0:
-                print(raid, "refusé (prisonnier)", self.prisonnier)
                 return False
         elif self.prisonnier + raid.get("prisonnier", 0) < 0:
-            print(raid, "refusé (prisonnier)", self.prisonnier)
             return False
         if isinstance(raid.get("army", 0), tuple):
             if self.army + self.tuple_effect(raid.get("army", 0)) < 0:
-                print(raid, "refusé (army)", self.army)
                 return False
         elif self.army + raid.get("army", 0) < 0:
-            print(raid, "refusé (army)", self.army)
             return False
-        print(raid, "accepté")
         return True
     
     
@@ -202,7 +196,7 @@ class Player():
             else:
                 self.army += self.tuple_effect(raid.get("army", 0))
             chainable = raid.get("chainable", False)
-            if chainable and random.randint(1, self.datas.chainable_chances) == 1:
+            if (chainable and random.randint(1, self.datas.chainable_chances) == 1) or not(self.test_raid(raid)):
                 self.gold += raid.get("gold_bonus", 0)
                 break
     
@@ -274,7 +268,7 @@ class Datas():
             {"nv": 3, "gold": -4, "prisonnier": 1, "chainable": True},
             {"nv": 3, "gold": -1, "glory": 2},
             {"nv": 3, "army": -2, "glory": 2, "gold": 1},
-            {"nv": 4, "gold": -2, "glory": -2, "chainable": True},
+            {"nv": 4, "gold": -2, "glory": 2, "chainable": True},
             {"nv": 4, "gold": (2, "army")},
             {"nv": 4, "army": (0.25, "army")}
         ]
@@ -346,7 +340,5 @@ game = Game(datas, analyse)
 game.play(1)
 
 # À ajouter:
-# - effets de raids tuples
-# - lvl up batiments
 # - analyse
 # - dieux
